@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Калькулятор продуктивности</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0e0c; --surface: #1a1916; --border: #2e2c28;
+      --accent: #c9a84c; --accent2: #7fb89a; --text: #e8e4da; --muted: #7a7669; --card: #161512;
+      --c1:#c9a84c; --c2:#7fb89a; --c3:#7b9ec9; --c4:#c97bb0; --c5:#c9a07b; --c6:#9bc97b;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2.5rem;
+      background:rgba(15,14,12,.92); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--accent); }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a { color:var(--muted); text-decoration:none; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase; transition:color .2s; }
+    .nav-links a:hover { color:var(--text); }
+    .nav-links a.active { color:var(--accent); }
+
+    .page { max-width:960px; margin:0 auto; padding:3rem 2rem 5rem; }
+    .page-label { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:.6rem; }
+    h1 { font-family:'DM Serif Display',serif; font-size:clamp(2rem,4vw,2.8rem); margin-bottom:.5rem; }
+    .subtitle { color:var(--muted); font-size:.9rem; margin-bottom:2.5rem; }
+
+    .calc-layout { display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; }
+
+    .inputs-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1.8rem;
+    }
+    .inputs-title { font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:1.2rem; }
+
+    .category-row {
+      display:grid; grid-template-columns:1.4rem 1fr auto;
+      align-items:center; gap:.8rem; margin-bottom:.9rem;
+    }
+    .cat-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .cat-label { font-size:.88rem; color:var(--text); }
+    .cat-input {
+      width:80px; padding:.45rem .7rem;
+      background:var(--bg); border:1px solid var(--border); border-radius:3px;
+      color:var(--text); font-family:'DM Sans',sans-serif; font-size:.88rem;
+      outline:none; text-align:right; transition:border-color .2s;
+    }
+    .cat-input:focus { border-color:var(--accent); }
+
+    .total-row {
+      display:flex; align-items:center; justify-content:space-between;
+      border-top:1px solid var(--border); padding-top:1rem; margin-top:.5rem;
+    }
+    .total-label { font-size:.78rem; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+    .total-val { font-family:'DM Serif Display',serif; font-size:1.5rem; color:var(--accent); }
+
+    .calc-btn {
+      width:100%; margin-top:1.2rem; padding:.75rem;
+      background:var(--accent); color:#0f0e0c;
+      font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:500;
+      border:none; border-radius:3px; cursor:pointer; transition:background .2s;
+    }
+    .calc-btn:hover { background:#d9b85c; }
+
+   
+    .chart-card {
+      background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1.8rem;
+      display:flex; flex-direction:column; align-items:center; gap:1.5rem;
+    }
+    canvas { display:block; }
+
+    .score-ring {
+      text-align:center;
+    }
+    .score-num { font-family:'DM Serif Display',serif; font-size:3.5rem; line-height:1; }
+    .score-label { font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:.3rem; }
+
+    .legend { width:100%; }
+    .legend-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.4rem 0; border-bottom:1px solid var(--border); font-size:.82rem;
+    }
+    .legend-item:last-child { border-bottom:none; }
+    .legend-left { display:flex; align-items:center; gap:.6rem; }
+    .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .legend-name { color:var(--text); }
+    .legend-right { display:flex; gap:1rem; }
+    .legend-hrs { color:var(--muted); }
+    .legend-pct { font-weight:500; color:var(--text); min-width:36px; text-align:right; }
+
+    .advice-box {
+      margin-top:2rem;
+      background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent);
+      border-radius:4px; padding:1.2rem 1.5rem;
+    }
+    .advice-label { font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:.5rem; }
+    .advice-text { font-size:.9rem; color:var(--text); line-height:1.65; }
+
+    @media(max-width:660px){
+      .calc-layout { grid-template-columns:1fr; }
+      nav { padding:.8rem 1.2rem; } .nav-links { gap:1rem; }
+      .page { padding:2rem 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">⏱ Время</div>
+  <ul class="nav-links">
+    <li><a href="index.html">Главная</a></li>
+    <li><a href="planner.html">Планировщик</a></li>
+    <li><a href="pomodoro.html">Pomodoro</a></li>
+    <li><a href="productivity.html" class="active">Калькулятор</a></li>
+    <li><a href="tips.html">Советы</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+  <div class="page-label">Модуль 3</div>
+  <h1>Калькулятор продуктивности</h1>
+  <p class="subtitle">Введи, сколько часов в день ты тратишь на каждую категорию</p>
+
+  <div class="calc-layout">
+   
+    <div class="inputs-card">
+      <div class="inputs-title">Распределение времени (часов/день)</div>
+
+      <div id="cat-rows"></div>
+
+      <div class="total-row">
+        <span class="total-label">Итого часов</span>
+        <span class="total-val" id="total-display">0 / 24</span>
+      </div>
+      <button class="calc-btn" onclick="calculate()">Рассчитать продуктивность</button>
+    </div>
+
+   
+    <div class="chart-card">
+      <div class="score-ring">
+        <div class="score-num" id="score-num" style="color:var(--accent2)">—</div>
+        <div class="score-label">индекс продуктивности</div>
+      </div>
+      <canvas id="pie" width="200" height="200"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+  <div class="advice-box" id="advice-box" style="display:none">
+    <div class="advice-label">💡 Рекомендация</div>
+    <div class="advice-text" id="advice-text"></div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  { key:'work',    label:'Работа / учёба',   color:'#c9a84c', productive:true  },
+  { key:'sport',   label:'Спорт / здоровье', color:'#7fb89a', productive:true  },
+  { key:'rest',    label:'Активный отдых',   color:'#7b9ec9', productive:true  },
+  { key:'sleep',   label:'Сон',              color:'#c97bb0', productive:false },
+  { key:'social',  label:'Соцсети / ТВ',     color:'#c97b7b', productive:false },
+  { key:'other',   label:'Прочее',           color:'#888',    productive:false },
+];
+
+
+const rowsEl = document.getElementById('cat-rows');
+CATEGORIES.forEach(c => {
+  rowsEl.innerHTML += `
+    <div class="category-row">
+      <span class="cat-dot" style="background:${c.color}"></span>
+      <span class="cat-label">${c.label}</span>
+      <input class="cat-input" type="number" id="inp-${c.key}" min="0" max="24" step="0.5" placeholder="0"
+             oninput="updateTotal()" />
+    </div>`;
+});
+
+function getValues() {
+  return CATEGORIES.map(c => {
+    const v = parseFloat(document.getElementById('inp-'+c.key).value) || 0;
+    return { ...c, hours: v };
+  });
+}
+
+function updateTotal() {
+  const vals = getValues();
+  const total = vals.reduce((a,c) => a + c.hours, 0);
+  const el = document.getElementById('total-display');
+  el.textContent = total.toFixed(1) + ' / 24';
+  el.style.color = total > 24 ? '#c96c6c' : 'var(--accent)';
+}
+
+function calculate() {
+  const vals = getValues();
+  const total = vals.reduce((a,c) => a + c.hours, 0);
+  if (total === 0) return;
+
+ 
+  const prodHours = vals.filter(c => c.productive).reduce((a,c) => a + c.hours, 0);
+  const score = Math.round(prodHours / Math.min(total, 24) * 100);
+
+  const scoreEl = document.getElementById('score-num');
+  scoreEl.textContent = score + '%';
+  scoreEl.style.color = score >= 60 ? 'var(--accent2)' : score >= 35 ? 'var(--accent)' : '#c96c6c';
+
+  drawPie(vals, total);
+  drawLegend(vals, total);
+  showAdvice(score, vals);
+}
+
+function drawPie(vals, total) {
+  const canvas = document.getElementById('pie');
+  const ctx = canvas.getContext('2d');
+  const cx = 100, cy = 100, r = 80;
+  ctx.clearRect(0, 0, 200, 200);
+
+  let startAngle = -Math.PI / 2;
+  vals.forEach(c => {
+    if (!c.hours) return;
+    const slice = (c.hours / Math.max(total, 1)) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+    ctx.closePath();
+    ctx.fillStyle = c.color;
+    ctx.fill();
+    startAngle += slice;
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 46, 0, 2 * Math.PI);
+  ctx.fillStyle = '#161512';
+  ctx.fill();
+}
+
+function drawLegend(vals, total) {
+  const el = document.getElementById('legend');
+  el.innerHTML = vals.filter(c => c.hours > 0).map(c => {
+    const pct = Math.round(c.hours / Math.max(total,1) * 100);
+    return `<div class="legend-item">
+      <div class="legend-left">
+        <span class="legend-dot" style="background:${c.color}"></span>
+        <span class="legend-name">${c.label}</span>
+      </div>
+      <div class="legend-right">
+        <span class="legend-hrs">${c.hours}ч</span>
+        <span class="legend-pct">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showAdvice(score, vals) {
+  const social = vals.find(c => c.key==='social')?.hours || 0;
+  const sleep  = vals.find(c => c.key==='sleep')?.hours  || 0;
+  const work   = vals.find(c => c.key==='work')?.hours   || 0;
+
+  let text = '';
+  if (score >= 70) text = '🎯 Отличный результат! Ты эффективно распределяешь время. Поддерживай этот баланс и не забывай про восстановление.';
+  else if (score >= 45) {
+    text = '📈 Неплохой баланс. ';
+    if (social > 2) text += `Ты тратишь ${social}ч на соцсети/ТВ — попробуй сократить до 1–1.5ч. `;
+    if (sleep < 7) text += `Сна ${sleep}ч — маловато, старайся спать 7–8 часов. `;
+    text += 'Увеличь долю рабочего/учебного времени на 10–15%.';
+  } else {
+    text = '⚠️ Много времени уходит на пассивные занятия. ';
+    if (social > 3) text += `Соцсети занимают ${social}ч — это серьёзно снижает продуктивность. `;
+    if (work < 4) text += 'Попробуй выделить хотя бы 4–6 часов на продуктивные задачи. ';
+    text += 'Метод Pomodoro поможет войти в ритм.';
+  }
+
+  document.getElementById('advice-text').textContent = text;
+  document.getElementById('advice-box').style.display = 'block';
+}
+</script>
+</body>
+</html>

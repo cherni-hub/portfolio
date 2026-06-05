@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Контакты</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0f0e0c; --surface:#1a1916; --border:#2e2c28;
+      --accent:#c9a84c; --accent2:#7fb89a; --danger:#c96c6c;
+      --text:#e8e4da; --muted:#7a7669; --card:#161512;
+      --ok:#7fb89a; --err:#c96c6c;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2.5rem; background:rgba(15,14,12,.92); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--accent); }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a { color:var(--muted); text-decoration:none; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase; transition:color .2s; }
+    .nav-links a:hover { color:var(--text); }
+    .nav-links a.active { color:var(--accent); }
+
+    .page {
+      max-width:860px; margin:0 auto; padding:3rem 2rem 5rem;
+      display:grid; grid-template-columns:1fr 1.4fr; gap:3rem; align-items:start;
+    }
+
+    
+    .info-side { padding-top:.5rem; }
+    .page-label { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:.6rem; }
+    h1 { font-family:'DM Serif Display',serif; font-size:clamp(2rem,4vw,2.8rem); line-height:1.1; margin-bottom:1rem; }
+    .info-text { font-size:.9rem; color:var(--muted); line-height:1.7; margin-bottom:2rem; }
+
+    .contact-item {
+      display:flex; align-items:center; gap:.9rem;
+      margin-bottom:1rem; padding:.9rem 1rem;
+      background:var(--surface); border:1px solid var(--border); border-radius:4px;
+    }
+    .contact-icon { font-size:1.2rem; flex-shrink:0; }
+    .contact-label { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .contact-val { font-size:.9rem; color:var(--text); }
+
+    
+    .form-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:2rem; position:relative; overflow:hidden;
+    }
+    .form-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    }
+
+    .form-title { font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:1.5rem; }
+
+    .field { margin-bottom:1.2rem; }
+    .field-label {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:.4rem;
+    }
+    label { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .field-hint { font-size:.7rem; color:var(--muted); }
+
+    input, textarea, select {
+      width:100%; padding:.65rem .9rem;
+      background:var(--bg); border:1px solid var(--border); border-radius:3px;
+      color:var(--text); font-family:'DM Sans',sans-serif; font-size:.9rem;
+      outline:none; transition:border-color .2s, box-shadow .2s;
+      resize:none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color:var(--accent);
+      box-shadow:0 0 0 2px rgba(201,168,76,.08);
+    }
+    input.valid   { border-color:var(--ok); }
+    input.invalid { border-color:var(--err); }
+    textarea.valid   { border-color:var(--ok); }
+    textarea.invalid { border-color:var(--err); }
+    select option { background:var(--bg); }
+
+    .field-msg {
+      font-size:.72rem; margin-top:.35rem; height:.9rem;
+      transition:color .2s;
+    }
+    .field-msg.ok  { color:var(--ok); }
+    .field-msg.err { color:var(--err); }
+
+    .char-counter { font-size:.7rem; color:var(--muted); text-align:right; margin-top:.25rem; }
+    .char-counter.warn { color:var(--accent); }
+    .char-counter.over { color:var(--err); }
+
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+    .submit-btn {
+      width:100%; padding:.75rem;
+      background:var(--accent); color:#0f0e0c;
+      font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:500;
+      border:none; border-radius:3px; cursor:pointer; transition:all .2s;
+      margin-top:.5rem;
+    }
+    .submit-btn:hover:not(:disabled) { background:#d9b85c; }
+    .submit-btn:disabled {
+      background:var(--border); color:var(--muted); cursor:not-allowed;
+    }
+
+    
+    .success-screen {
+      display:none; text-align:center; padding:2rem 1rem;
+    }
+    .success-screen.show { display:block; }
+    .form-fields.hide { display:none; }
+
+    .success-icon { font-size:3rem; margin-bottom:1rem; }
+    .success-title { font-family:'DM Serif Display',serif; font-size:1.6rem; margin-bottom:.6rem; }
+    .success-text { font-size:.9rem; color:var(--muted); line-height:1.6; margin-bottom:1.5rem; }
+    .reset-btn {
+      padding:.55rem 1.4rem; background:transparent; border:1px solid var(--border);
+      border-radius:3px; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:.85rem;
+      cursor:pointer; transition:all .2s;
+    }
+    .reset-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+    @media(max-width:660px){
+      .page { grid-template-columns:1fr; gap:2rem; }
+      .form-row { grid-template-columns:1fr; }
+      nav { padding:.8rem 1.2rem; } .nav-links { gap:1rem; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">⏱ Время</div>
+  <ul class="nav-links">
+    <li><a href="index.html">Главная</a></li>
+    <li><a href="planner.html">Планировщик</a></li>
+    <li><a href="pomodoro.html">Pomodoro</a></li>
+    <li><a href="productivity.html">Калькулятор</a></li>
+    <li><a href="tips.html">Советы</a></li>
+    <li><a href="contact.html" class="active">Контакты</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+  <!-- LEFT -->
+  <div class="info-side">
+    <div class="page-label">Модуль 6</div>
+    <h1>Есть<br/>вопросы?</h1>
+    <p class="info-text">
+      Напиши нам — мы ответим на вопросы о методиках тайм-менеджмента,
+      поможем выбрать подходящий инструмент или расскажем о проекте.
+    </p>
+
+    <div class="contact-item">
+      <span class="contact-icon">📧</span>
+      <div>
+        <div class="contact-label">E-mail</div>
+        <div class="contact-val">hello@effective-time.ru</div>
+      </div>
+    </div>
+    <div class="contact-item">
+      <span class="contact-icon">💬</span>
+      <div>
+        <div class="contact-label">Telegram</div>
+        <div class="contact-val">@effective_time</div>
+      </div>
+    </div>
+    <div class="contact-item">
+      <span class="contact-icon">⏱</span>
+      <div>
+        <div class="contact-label">Время ответа</div>
+        <div class="contact-val">В течение 24 часов</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="form-card">
+    <div class="success-screen" id="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Сообщение отправлено!</div>
+      <p class="success-text">Спасибо, мы получили твоё сообщение и ответим в течение суток.</p>
+      <button class="reset-btn" onclick="resetForm()">← Написать ещё раз</button>
+    </div>
+
+    <div class="form-fields" id="form-fields">
+      <div class="form-title">Напиши нам</div>
+
+      <div class="form-row">
+        <div class="field">
+          <div class="field-label"><label for="f-name">Имя</label></div>
+          <input type="text" id="f-name" placeholder="Алиса" oninput="validate('name')" />
+          <div class="field-msg" id="msg-name"></div>
+        </div>
+        <div class="field">
+          <div class="field-label"><label for="f-email">E-mail</label><span class="field-hint">обязательно</span></div>
+          <input type="email" id="f-email" placeholder="alice@mail.ru" oninput="validate('email')" />
+          <div class="field-msg" id="msg-email"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label"><label for="f-topic">Тема</label></div>
+        <select id="f-topic" onchange="validate('topic')">
+          <option value="">— выбери тему —</option>
+          <option value="question">Вопрос о методике</option>
+          <option value="feedback">Отзыв о проекте</option>
+          <option value="bug">Нашёл ошибку</option>
+          <option value="collab">Сотрудничество</option>
+          <option value="other">Другое</option>
+        </select>
+        <div class="field-msg" id="msg-topic"></div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <label for="f-msg">Сообщение</label>
+          <span class="field-hint">обязательно</span>
+        </div>
+        <textarea id="f-msg" rows="5" placeholder="Напиши своё сообщение..." oninput="validate('msg'); updateCounter()"></textarea>
+        <div class="char-counter" id="char-counter">0 / 500</div>
+        <div class="field-msg" id="msg-msg"></div>
+      </div>
+
+      <button class="submit-btn" id="submit-btn" disabled onclick="submitForm()">Отправить сообщение</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const RULES = {
+  name:  {
+    regex: /^[a-zA-Zа-яёА-ЯЁ\s\-]{2,40}$/,
+    errMsg: 'Имя: 2–40 букв',
+    okMsg: '✓ Хорошо',
+    required: false,
+  },
+  email: {
+    regex: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+    errMsg: 'Введи корректный e-mail',
+    okMsg: '✓ Корректный e-mail',
+    required: true,
+  },
+  topic: {
+   
+    regex: /^.+$/,
+    errMsg: 'Выбери тему',
+    okMsg: '',
+    required: false,
+  },
+  msg: {
+    regex: /^[\s\S]{10,500}$/,
+    errMsg: 'Сообщение: от 10 до 500 символов',
+    okMsg: '✓ Отлично',
+    required: true,
+  },
+};
+
+const state = { name:null, email:null, topic:null, msg:null };
+
+function getValue(key) {
+  const el = document.getElementById('f-' + key);
+  return el ? el.value.trim() : '';
+}
+
+function validate(key) {
+  const rule  = RULES[key];
+  const value = getValue(key);
+  const msgEl = document.getElementById('msg-' + key);
+  const inpEl = document.getElementById('f-' + key);
+
+  if (!value) {
+    if (rule.required) {
+      setFieldState(key, false, 'Это поле обязательно');
+    } else {
+      // optional empty = neutral
+      setFieldState(key, null, '');
+    }
+    checkForm();
+    return;
+  }
+
+  const valid = rule.regex.test(value);
+  setFieldState(key, valid, valid ? rule.okMsg : rule.errMsg);
+  checkForm();
+}
+
+function setFieldState(key, valid, msg) {
+  state[key] = valid; // true | false | null
+  const msgEl = document.getElementById('msg-' + key);
+  const inpEl = document.getElementById('f-' + key);
+
+  msgEl.textContent = msg;
+  msgEl.className   = 'field-msg ' + (valid === true ? 'ok' : valid === false ? 'err' : '');
+  inpEl.classList.remove('valid','invalid');
+  if (valid === true)  inpEl.classList.add('valid');
+  if (valid === false) inpEl.classList.add('invalid');
+}
+
+function checkForm() {
+  
+  const emailOk = state.email === true;
+  const msgOk   = state.msg   === true;
+  const nameOk  = state.name !== false;
+  const topicOk = state.topic !== false;
+
+  document.getElementById('submit-btn').disabled = !(emailOk && msgOk && nameOk && topicOk);
+}
+
+function updateCounter() {
+  const len = document.getElementById('f-msg').value.length;
+  const el  = document.getElementById('char-counter');
+  el.textContent = len + ' / 500';
+  el.className = 'char-counter' + (len > 500 ? ' over' : len > 420 ? ' warn' : '');
+}
+
+function submitForm() {
+
+  document.getElementById('form-fields').classList.add('hide');
+  document.getElementById('success-screen').classList.add('show');
+}
+
+function resetForm() {
+  ['name','email','topic','msg'].forEach(k => {
+    setFieldState(k, null, '');
+    document.getElementById('f-'+k).value = '';
+  });
+  updateCounter();
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('form-fields').classList.remove('hide');
+  document.getElementById('success-screen').classList.remove('show');
+}
+
+
+['name','email','topic','msg'].forEach(key => {
+  const el = document.getElementById('f-' + key);
+  if (el) el.addEventListener('blur', () => validate(key));
+});
+</script>
+</body>
+</html>

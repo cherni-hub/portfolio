@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Планировщик задач</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f0e0c;
+      --surface:  #1a1916;
+      --border:   #2e2c28;
+      --accent:   #c9a84c;
+      --accent2:  #7fb89a;
+      --danger:   #c96c6c;
+      --text:     #e8e4da;
+      --muted:    #7a7669;
+      --card:     #161512;
+      --done-bg:  #131310;
+      --p-high:   #c96c6c;
+      --p-mid:    #c9a84c;
+      --p-low:    #7fb89a;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(15,14,12,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem; color: var(--accent); letter-spacing: 0.04em;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    
+    .page {
+      max-width: 900px; margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2.5rem; }
+    .page-label {
+      font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.6rem;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1.1;
+    }
+
+    
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 6px;
+      overflow: hidden; margin-bottom: 2rem;
+    }
+    .stat-item {
+      background: var(--card); padding: 1.1rem 1.5rem;
+      display: flex; flex-direction: column; gap: 0.25rem;
+    }
+    .stat-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem; line-height: 1;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-item:nth-child(1) .stat-value { color: var(--text); }
+    .stat-item:nth-child(2) .stat-value { color: var(--accent2); }
+    .stat-item:nth-child(3) .stat-value { color: var(--accent); }
+
+    
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .form-title {
+      font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1rem;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.75rem;
+      align-items: end;
+    }
+    .form-row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .field { display: flex; flex-direction: column; gap: 0.35rem; }
+    label {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    input, select {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 3px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      padding: 0.6rem 0.85rem; outline: none;
+      transition: border-color .2s;
+      width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    select option { background: var(--bg); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.6rem 1.3rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+      border-radius: 3px; cursor: pointer; border: none;
+      transition: all .2s; white-space: nowrap;
+    }
+    .btn-add    { background: var(--accent); color: #0f0e0c; }
+    .btn-add:hover { background: #d9b85c; }
+    .btn-save   { background: var(--accent2); color: #0f0e0c; }
+    .btn-save:hover { background: #8ec9a8; }
+    .btn-cancel { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-cancel:hover { color: var(--text); border-color: var(--muted); }
+    .btn-icon {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--muted); padding: 0.3rem; border-radius: 3px;
+      transition: color .15s, background .15s; line-height: 1;
+      font-size: 0.95rem;
+    }
+    .btn-icon:hover { color: var(--text); background: var(--border); }
+    .btn-icon.danger:hover { color: var(--danger); }
+
+    
+    .filters {
+      display: flex; gap: 0.5rem; align-items: center;
+      flex-wrap: wrap; margin-bottom: 1.25rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      font-size: 0.78rem; letter-spacing: 0.05em;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 2px; color: var(--muted); cursor: pointer;
+      transition: all .15s; font-family: 'DM Sans', sans-serif;
+    }
+    .filter-btn:hover { border-color: var(--muted); color: var(--text); }
+    .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(201,168,76,0.07); }
+    .filter-sep { width: 1px; height: 1.2rem; background: var(--border); margin: 0 0.25rem; }
+
+    
+    .tasks-section { margin-bottom: 2rem; }
+    .tasks-section-title {
+      font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .tasks-section-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .task-list { display: flex; flex-direction: column; gap: 2px; }
+
+    .task-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.9rem 1.1rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.85rem;
+      transition: border-color .2s, opacity .2s;
+      animation: slideIn .25s ease;
+    }
+    .task-item:hover { border-color: #3e3c38; }
+    .task-item.done { opacity: 0.45; background: var(--done-bg); }
+    .task-item.done .task-title { text-decoration: line-through; color: var(--muted); }
+
+   
+    .task-item.editing { border-color: var(--accent); background: var(--surface); }
+    .edit-fields { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    .edit-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .task-check {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--border);
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .task-check:hover { border-color: var(--accent2); }
+    .task-item.done .task-check {
+      background: var(--accent2); border-color: var(--accent2);
+    }
+    .task-check-inner { display: none; color: #0f0e0c; font-size: 10px; font-weight: 700; }
+    .task-item.done .task-check-inner { display: block; }
+
+    .task-body { min-width: 0; }
+    .task-title { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-meta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.15rem 0.5rem; border-radius: 2px;
+    }
+    .tag-cat  { background: rgba(127,184,154,0.12); color: var(--accent2); border: 1px solid rgba(127,184,154,0.2); }
+    .tag-high { background: rgba(201,108,108,0.12); color: var(--p-high);  border: 1px solid rgba(201,108,108,0.2); }
+    .tag-mid  { background: rgba(201,168,76,0.12);  color: var(--p-mid);   border: 1px solid rgba(201,168,76,0.2); }
+    .tag-low  { background: rgba(127,184,154,0.12); color: var(--p-low);   border: 1px solid rgba(127,184,154,0.2); }
+
+    .task-timer-label {
+      font-size: 0.72rem; color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .task-actions { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+
+    .empty-state {
+      text-align: center; padding: 3rem 1rem; color: var(--muted);
+    }
+    .empty-state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+    .empty-state p { font-size: 0.88rem; }
+
+    
+    .task-item { border-left-width: 3px; }
+    .task-item[data-priority="high"]   { border-left-color: var(--p-high); }
+    .task-item[data-priority="medium"] { border-left-color: var(--p-mid); }
+    .task-item[data-priority="low"]    { border-left-color: var(--p-low); }
+    .task-item[data-priority=""]       { border-left-color: var(--border); }
+
+    @media (max-width: 620px) {
+      .form-grid  { grid-template-columns: 1fr; }
+      .form-row2  { grid-template-columns: 1fr 1fr; }
+      .stats-bar  { grid-template-columns: 1fr 1fr; }
+      .stats-bar .stat-item:last-child { grid-column: span 2; }
+      nav { padding: 0.8rem 1.2rem; }
+      .nav-links { gap: 1rem; }
+      .page { padding: 2rem 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">⏱ Время</div>
+  <ul class="nav-links">
+    <li><a href="index.html">Главная</a></li>
+    <li><a href="planner.html" class="active">Планировщик</a></li>
+    <li><a href="pomodoro.html">Pomodoro</a></li>
+    <li><a href="productivity.html">Калькулятор</a></li>
+    <li><a href="tips.html">Советы</a></li>
+    <li><a href="contact.html">Контакты</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <div class="page-header">
+    <div class="page-label">Модуль 2</div>
+    <h1 class="page-title">Планировщик задач</h1>
+  </div>
+
+  
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-value" id="stat-total">0</span>
+      <span class="stat-label">Всего задач</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-done">0</span>
+      <span class="stat-label">Выполнено</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-pct">0%</span>
+      <span class="stat-label">Прогресс</span>
+    </div>
+  </div>
+
+ 
+  <div class="add-form">
+    <div class="form-title">Новая задача</div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="inp-title">Название задачи</label>
+        <input type="text" id="inp-title" placeholder="Что нужно сделать?" />
+      </div>
+      <div class="field" style="min-width:140px;">
+        <label for="inp-timer">Время (мин)</label>
+        <input type="number" id="inp-timer" placeholder="25" min="1" max="480" />
+      </div>
+      <div class="field" style="align-self:end;">
+        <button class="btn btn-add" onclick="addTask()">+ Добавить</button>
+      </div>
+    </div>
+    <div class="form-row2">
+      <div class="field">
+        <label for="inp-cat">Категория</label>
+        <select id="inp-cat">
+          <option value="">— без категории</option>
+          <option value="work">💼 Работа</option>
+          <option value="study">📚 Учёба</option>
+          <option value="sport">🏃 Спорт</option>
+          <option value="rest">🛋 Отдых</option>
+          <option value="personal">🙂 Личное</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="inp-priority">Приоритет</label>
+        <select id="inp-priority">
+          <option value="">— без приоритета</option>
+          <option value="high">🔴 Высокий</option>
+          <option value="medium">🟡 Средний</option>
+          <option value="low">🟢 Низкий</option>
+        </select>
+      </div>
+      <div class="field" style="justify-content:flex-end; align-self:end;">
+        <button class="btn btn-cancel" onclick="clearForm()">Очистить</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all"      onclick="setFilter('all',this)">Все</button>
+    <button class="filter-btn"        data-filter="active"   onclick="setFilter('active',this)">Активные</button>
+    <button class="filter-btn"        data-filter="done"     onclick="setFilter('done',this)">Выполненные</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn"        data-filter="high"     onclick="setFilter('high',this)">🔴 Высокий</button>
+    <button class="filter-btn"        data-filter="medium"   onclick="setFilter('medium',this)">🟡 Средний</button>
+    <button class="filter-btn"        data-filter="low"      onclick="setFilter('low',this)">🟢 Низкий</button>
+  </div>
+
+  
+  <div class="tasks-section" id="section-active">
+    <div class="tasks-section-title">Активные задачи</div>
+    <div class="task-list" id="list-active"></div>
+  </div>
+
+  
+  <div class="tasks-section" id="section-done">
+    <div class="tasks-section-title">Выполненные</div>
+    <div class="task-list" id="list-done"></div>
+  </div>
+
+</div>
+
+<script>
+
+const STORAGE_KEY = 'tm_tasks';
+let tasks = [];
+let currentFilter = 'all';
+
+const CAT_LABELS = {
+  work: '💼 Работа', study: '📚 Учёба',
+  sport: '🏃 Спорт', rest: '🛋 Отдых', personal: '🙂 Личное', '': ''
+};
+const PRI_LABELS = { high: 'Высокий', medium: 'Средний', low: 'Низкий', '': '' };
+const PRI_CLASS  = { high: 'tag-high', medium: 'tag-mid', low: 'tag-low', '': '' };
+
+
+function saveTasks() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+function loadTasks() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  tasks = raw ? JSON.parse(raw) : [];
+}
+
+
+function addTask() {
+  const title = document.getElementById('inp-title').value.trim();
+  if (!title) {
+    document.getElementById('inp-title').focus();
+    document.getElementById('inp-title').style.borderColor = 'var(--danger)';
+    setTimeout(() => document.getElementById('inp-title').style.borderColor = '', 1200);
+    return;
+  }
+  const task = {
+    id:       Date.now(),
+    title,
+    category: document.getElementById('inp-cat').value,
+    priority: document.getElementById('inp-priority').value,
+    timer:    parseInt(document.getElementById('inp-timer').value) || null,
+    done:     false,
+    created:  new Date().toISOString(),
+  };
+  tasks.unshift(task);
+  saveTasks();
+  clearForm();
+  render();
+}
+
+function clearForm() {
+  document.getElementById('inp-title').value    = '';
+  document.getElementById('inp-timer').value    = '';
+  document.getElementById('inp-cat').value      = '';
+  document.getElementById('inp-priority').value = '';
+  document.getElementById('inp-title').focus();
+}
+
+
+function toggleDone(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; saveTasks(); render(); }
+}
+
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  render();
+}
+
+
+function startEdit(id) {
+
+  commitEdits();
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (!el) return;
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+
+  el.classList.add('editing');
+  const body = el.querySelector('.task-body');
+  body.innerHTML = `
+    <div class="edit-fields">
+      <input class="edit-inp-title" type="text" value="${escHtml(t.title)}" style="margin-bottom:0" />
+      <div class="edit-row">
+        <select class="edit-inp-cat">
+          <option value="">— без категории</option>
+          <option value="work"     ${t.category==='work'     ?'selected':''}>💼 Работа</option>
+          <option value="study"    ${t.category==='study'    ?'selected':''}>📚 Учёба</option>
+          <option value="sport"    ${t.category==='sport'    ?'selected':''}>🏃 Спорт</option>
+          <option value="rest"     ${t.category==='rest'     ?'selected':''}>🛋 Отдых</option>
+          <option value="personal" ${t.category==='personal' ?'selected':''}>🙂 Личное</option>
+        </select>
+        <select class="edit-inp-priority">
+          <option value="">— без приоритета</option>
+          <option value="high"   ${t.priority==='high'   ?'selected':''}>🔴 Высокий</option>
+          <option value="medium" ${t.priority==='medium' ?'selected':''}>🟡 Средний</option>
+          <option value="low"    ${t.priority==='low'    ?'selected':''}>🟢 Низкий</option>
+        </select>
+        <input class="edit-inp-timer" type="number" placeholder="мин" min="1" value="${t.timer || ''}" style="width:80px" />
+      </div>
+    </div>`;
+
+  const actions = el.querySelector('.task-actions');
+  actions.innerHTML = `
+    <button class="btn btn-save" style="padding:0.45rem 0.9rem;font-size:0.8rem" onclick="saveEdit(${id})">Сохранить</button>
+    <button class="btn btn-cancel" style="padding:0.45rem 0.9rem;font-size:0.8rem" onclick="cancelEdit(${id})">Отмена</button>`;
+
+  el.querySelector('.edit-inp-title').focus();
+}
+
+function commitEdits() {
+ 
+  document.querySelectorAll('.task-item.editing').forEach(el => {
+    const id = parseInt(el.dataset.id);
+    _applyEdit(id, el);
+  });
+}
+
+function saveEdit(id) {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  _applyEdit(id, el);
+  saveTasks();
+  render();
+}
+
+function _applyEdit(id, el) {
+  const t = tasks.find(t => t.id === id);
+  if (!t || !el) return;
+  const newTitle = el.querySelector('.edit-inp-title')?.value.trim();
+  if (newTitle) t.title = newTitle;
+  t.category = el.querySelector('.edit-inp-cat')?.value ?? t.category;
+  t.priority = el.querySelector('.edit-inp-priority')?.value ?? t.priority;
+  const tv = parseInt(el.querySelector('.edit-inp-timer')?.value);
+  t.timer = isNaN(tv) ? null : tv;
+}
+
+function cancelEdit(id) {
+  render();
+}
+
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function applyFilter(list) {
+  if (currentFilter === 'all')    return list;
+  if (currentFilter === 'active') return list.filter(t => !t.done);
+  if (currentFilter === 'done')   return list.filter(t => t.done);
+  // priority filter
+  return list.filter(t => t.priority === currentFilter);
+}
+
+
+function render() {
+  const active = applyFilter(tasks.filter(t => !t.done));
+  const done   = applyFilter(tasks.filter(t => t.done));
+
+  renderList('list-active', active);
+  renderList('list-done', done);
+
+ 
+  const total  = tasks.length;
+  const doneN  = tasks.filter(t => t.done).length;
+  const pct    = total ? Math.round(doneN / total * 100) : 0;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-done').textContent  = doneN;
+  document.getElementById('stat-pct').textContent   = pct + '%';
+
+  
+  document.getElementById('section-done').style.display = done.length || currentFilter==='done' ? '' : 'none';
+}
+
+function renderList(listId, items) {
+  const el = document.getElementById(listId);
+  if (!items.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">${listId === 'list-active' ? '📋' : '✅'}</div>
+        <p>${listId === 'list-active' ? 'Задач нет. Добавь первую выше!' : 'Выполненных задач пока нет.'}</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = '';
+  items.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'task-item' + (t.done ? ' done' : '');
+    item.dataset.id = t.id;
+    item.dataset.priority = t.priority;
+
+    const catLabel = CAT_LABELS[t.category] || '';
+    const priLabel = PRI_LABELS[t.priority] || '';
+    const priClass = PRI_CLASS[t.priority] || '';
+    const timerLabel = t.timer ? `⏱ ${t.timer} мин` : '';
+
+    item.innerHTML = `
+      <div class="task-check" onclick="toggleDone(${t.id})" title="Отметить как выполненную">
+        <span class="task-check-inner">✓</span>
+      </div>
+      <div class="task-body">
+        <div class="task-title">${escHtml(t.title)}</div>
+        <div class="task-meta">
+          ${catLabel ? `<span class="tag tag-cat">${catLabel}</span>` : ''}
+          ${priLabel ? `<span class="tag ${priClass}">${priLabel}</span>` : ''}
+          ${timerLabel ? `<span class="task-timer-label">${timerLabel}</span>` : ''}
+        </div>
+      </div>
+      <div class="task-actions">
+        ${!t.done ? `<button class="btn-icon" onclick="startEdit(${t.id})" title="Редактировать">✏️</button>` : ''}
+        <button class="btn-icon danger" onclick="deleteTask(${t.id})" title="Удалить">🗑</button>
+      </div>`;
+
+    el.appendChild(item);
+  });
+}
+
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+document.getElementById('inp-title').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+
+loadTasks();
+render();
+</script>
+</body>
+</html>

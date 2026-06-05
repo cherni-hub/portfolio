@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pomodoro Таймер</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0e0c; --surface: #1a1916; --border: #2e2c28;
+      --accent: #c9a84c; --accent2: #7fb89a; --text: #e8e4da; --muted: #7a7669; --card: #161512;
+      --mode-work: #c9a84c; --mode-short: #7fb89a; --mode-long: #7b9ec9;
+    }
+    body {
+      font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text);
+      min-height:100vh; transition:background .8s ease;
+    }
+    body.mode-work  { --ring-color: #c9a84c; }
+    body.mode-short { --ring-color: #7fb89a; background:#0b100e; }
+    body.mode-long  { --ring-color: #7b9ec9; background:#0b0e10; }
+    body { --ring-color: #c9a84c; }
+
+    nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2.5rem;
+      background:rgba(15,14,12,.92); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--accent); }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a { color:var(--muted); text-decoration:none; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase; transition:color .2s; }
+    .nav-links a:hover { color:var(--text); }
+    .nav-links a.active { color:var(--accent); }
+
+    .page { max-width:700px; margin:0 auto; padding:3rem 2rem 5rem; text-align:center; }
+    .page-label { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:.6rem; }
+    h1 { font-family:'DM Serif Display',serif; font-size:clamp(2rem,4vw,2.8rem); margin-bottom:2.5rem; }
+
+  
+    .mode-tabs {
+      display:inline-flex; gap:2px; background:var(--surface);
+      border:1px solid var(--border); border-radius:5px; padding:3px;
+      margin-bottom:2.5rem;
+    }
+    .mode-tab {
+      padding:.45rem 1.2rem; border-radius:3px; cursor:pointer;
+      font-size:.8rem; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--muted); background:transparent; border:none;
+      font-family:'DM Sans',sans-serif; transition:all .2s;
+    }
+    .mode-tab.active { background:var(--ring-color); color:#0f0e0c; font-weight:500; }
+
+    
+    .ring-wrap {
+      position:relative; width:280px; height:280px;
+      margin:0 auto 2rem; display:flex; align-items:center; justify-content:center;
+    }
+    svg.ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+    circle.track { fill:none; stroke:var(--border); stroke-width:6; }
+    circle.progress {
+      fill:none; stroke:var(--ring-color); stroke-width:6;
+      stroke-linecap:round;
+      stroke-dasharray:754; stroke-dashoffset:0;
+      transition:stroke-dashoffset .8s linear, stroke .5s;
+    }
+    .ring-inner { position:relative; z-index:2; text-align:center; }
+    .timer-display {
+      font-family:'DM Serif Display',serif;
+      font-size:4.5rem; line-height:1; letter-spacing:-.02em;
+      color:var(--text); font-variant-numeric:tabular-nums;
+    }
+    .mode-label {
+      font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--ring-color); margin-top:.4rem; transition:color .5s;
+    }
+
+    
+    @keyframes pulse-ring {
+      0%,100% { opacity:1; }
+      50%      { opacity:.6; }
+    }
+    .ring-wrap.running svg.ring { animation:pulse-ring 2s ease-in-out infinite; }
+
+   
+    .controls { display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:2.5rem; }
+    .btn-ctrl {
+      display:flex; align-items:center; justify-content:center;
+      width:56px; height:56px; border-radius:50%; cursor:pointer;
+      font-size:1.2rem; border:none; transition:all .2s;
+    }
+    .btn-main {
+      width:70px; height:70px; font-size:1.5rem;
+      background:var(--ring-color); color:#0f0e0c;
+      box-shadow:0 0 0 0 rgba(201,168,76,.4);
+    }
+    .btn-main:hover { transform:scale(1.06); }
+    .btn-main.running { animation:ring-pulse 2s ease-in-out infinite; }
+    @keyframes ring-pulse {
+      0%,100% { box-shadow:0 0 0 0 rgba(201,168,76,.4); }
+      50%      { box-shadow:0 0 0 12px rgba(201,168,76,0); }
+    }
+    .btn-secondary { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
+    .btn-secondary:hover { color:var(--text); border-color:var(--muted); }
+
+
+    .stats-row {
+      display:flex; justify-content:center; gap:3rem; margin-bottom:2.5rem;
+    }
+    .stat { text-align:center; }
+    .stat-n { font-family:'DM Serif Display',serif; font-size:2.2rem; color:var(--ring-color); transition:color .5s; }
+    .stat-l { font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+
+    
+    .settings-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:1.5rem; text-align:left;
+    }
+    .settings-title { font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:1.2rem; }
+    .settings-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .setting-field { display:flex; flex-direction:column; gap:.35rem; }
+    label { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    input[type=number] {
+      padding:.55rem .8rem;
+      background:var(--bg); border:1px solid var(--border); border-radius:3px;
+      color:var(--text); font-family:'DM Sans',sans-serif; font-size:.9rem;
+      outline:none; transition:border-color .2s; width:100%; text-align:center;
+    }
+    input[type=number]:focus { border-color:var(--accent); }
+    .apply-btn {
+      margin-top:1rem; padding:.55rem 1.4rem;
+      background:transparent; border:1px solid var(--border); border-radius:3px;
+      color:var(--muted); font-family:'DM Sans',sans-serif; font-size:.82rem;
+      cursor:pointer; transition:all .2s;
+    }
+    .apply-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+    
+    .toast {
+      position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(60px);
+      background:var(--surface); border:1px solid var(--ring-color); border-radius:4px;
+      padding:.75rem 1.5rem; font-size:.88rem; color:var(--text);
+      transition:transform .4s ease, opacity .4s; opacity:0; z-index:200; white-space:nowrap;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+    @media(max-width:500px){
+      .settings-grid { grid-template-columns:1fr 1fr; }
+      nav { padding:.8rem 1.2rem; } .nav-links { gap:1rem; }
+      .page { padding:2rem 1rem 4rem; }
+    }
+  </style>
+</head>
+<body class="mode-work">
+<nav>
+  <div class="nav-logo">⏱ Время</div>
+  <ul class="nav-links">
+    <li><a href="index.html">Главная</a></li>
+    <li><a href="planner.html">Планировщик</a></li>
+    <li><a href="pomodoro.html" class="active">Pomodoro</a></li>
+    <li><a href="productivity.html">Калькулятор</a></li>
+    <li><a href="tips.html">Советы</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+  <div class="page-label">Модуль 4</div>
+  <h1>Pomodoro Таймер</h1>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('work',this)">Работа</button>
+    <button class="mode-tab" onclick="setMode('short',this)">Короткий перерыв</button>
+    <button class="mode-tab" onclick="setMode('long',this)">Длинный перерыв</button>
+  </div>
+
+  <div class="ring-wrap" id="ring-wrap">
+    <svg class="ring" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+      <circle class="track" cx="120" cy="120" r="110" />
+      <circle class="progress" id="ring-progress" cx="120" cy="120" r="110"
+              stroke-dasharray="691.2" stroke-dashoffset="0" />
+    </svg>
+    <div class="ring-inner">
+      <div class="timer-display" id="timer-display">25:00</div>
+      <div class="mode-label" id="mode-label">Работа</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-ctrl btn-secondary" onclick="skipBack()" title="Назад">↩</button>
+    <button class="btn-ctrl btn-main" id="btn-main" onclick="toggleTimer()">▶</button>
+    <button class="btn-ctrl btn-secondary" onclick="resetTimer()" title="Сбросить">↺</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-n" id="stat-pomodoros">0</div>
+      <div class="stat-l">Помидоров</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n" id="stat-minutes">0</div>
+      <div class="stat-l">Минут фокуса</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n" id="stat-breaks">0</div>
+      <div class="stat-l">Перерывов</div>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-title">Настройки длительности (минуты)</div>
+    <div class="settings-grid">
+      <div class="setting-field">
+        <label>Работа</label>
+        <input type="number" id="set-work"  value="25" min="1" max="90" />
+      </div>
+      <div class="setting-field">
+        <label>Короткий перерыв</label>
+        <input type="number" id="set-short" value="5"  min="1" max="30" />
+      </div>
+      <div class="setting-field">
+        <label>Длинный перерыв</label>
+        <input type="number" id="set-long"  value="15" min="1" max="60" />
+      </div>
+    </div>
+    <button class="apply-btn" onclick="applySettings()">Применить настройки</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+let DURATIONS = { work:25*60, short:5*60, long:15*60 };
+const MODE_LABELS = { work:'Работа', short:'Короткий перерыв', long:'Длинный перерыв' };
+const MODE_CLASSES = { work:'mode-work', short:'mode-short', long:'mode-long' };
+
+let currentMode = 'work';
+let totalSeconds = DURATIONS.work;
+let remaining = totalSeconds;
+let intervalId = null;
+let isRunning = false;
+
+let stats = { pomodoros:0, minutes:0, breaks:0 };
+
+
+const CIRCUMFERENCE = 2 * Math.PI * 110; // r=110
+const ringEl = document.getElementById('ring-progress');
+
+function updateRing() {
+  const frac = remaining / totalSeconds;
+  const offset = CIRCUMFERENCE * (1 - frac);
+  ringEl.style.strokeDashoffset = offset;
+  ringEl.style.strokeDasharray = CIRCUMFERENCE;
+}
+
+
+function updateDisplay() {
+  const m = Math.floor(remaining / 60);
+  const s = remaining % 60;
+  document.getElementById('timer-display').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  updateRing();
+}
+
+
+function toggleTimer() {
+  if (isRunning) pause(); else start();
+}
+
+function start() {
+  isRunning = true;
+  document.getElementById('btn-main').textContent = '⏸';
+  document.getElementById('btn-main').classList.add('running');
+  document.getElementById('ring-wrap').classList.add('running');
+
+  intervalId = setInterval(() => {
+    if (remaining <= 0) {
+      clearInterval(intervalId);
+      onTimerEnd();
+      return;
+    }
+    remaining--;
+    updateDisplay();
+  }, 1000);
+}
+
+function pause() {
+  isRunning = false;
+  clearInterval(intervalId);
+  document.getElementById('btn-main').textContent = '▶';
+  document.getElementById('btn-main').classList.remove('running');
+  document.getElementById('ring-wrap').classList.remove('running');
+}
+
+function resetTimer() {
+  pause();
+  remaining = totalSeconds;
+  updateDisplay();
+}
+
+function skipBack() {
+  resetTimer();
+}
+
+function onTimerEnd() {
+  pause();
+  playBeep();
+
+  if (currentMode === 'work') {
+    stats.pomodoros++;
+    stats.minutes += Math.round(DURATIONS.work / 60);
+    document.getElementById('stat-pomodoros').textContent = stats.pomodoros;
+    document.getElementById('stat-minutes').textContent = stats.minutes;
+
+    const nextMode = stats.pomodoros % 4 === 0 ? 'long' : 'short';
+    showToast('🍅 Помидор завершён! Начинается ' + MODE_LABELS[nextMode].toLowerCase());
+    setTimeout(() => setModeByKey(nextMode), 1200);
+  } else {
+    stats.breaks++;
+    document.getElementById('stat-breaks').textContent = stats.breaks;
+    showToast('✅ Перерыв окончен! Время работать.');
+    setTimeout(() => setModeByKey('work'), 1200);
+  }
+}
+
+
+function setMode(key, btn) {
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  setModeByKey(key);
+}
+
+function setModeByKey(key) {
+  pause();
+  currentMode = key;
+  totalSeconds = DURATIONS[key];
+  remaining = totalSeconds;
+
+  document.body.className = MODE_CLASSES[key];
+  document.getElementById('mode-label').textContent = MODE_LABELS[key];
+
+  // sync tab
+  document.querySelectorAll('.mode-tab').forEach((b,i) => {
+    const keys = ['work','short','long'];
+    b.classList.toggle('active', keys[i] === key);
+  });
+
+  updateDisplay();
+}
+
+
+function applySettings() {
+  DURATIONS.work  = (parseInt(document.getElementById('set-work').value)  || 25) * 60;
+  DURATIONS.short = (parseInt(document.getElementById('set-short').value) || 5)  * 60;
+  DURATIONS.long  = (parseInt(document.getElementById('set-long').value)  || 15) * 60;
+  setModeByKey(currentMode);
+  showToast('⚙️ Настройки применены');
+}
+
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.35, t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t); osc.stop(t + 0.4);
+    });
+  } catch(e) {}
+}
+
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+
+updateDisplay();
+</script>
+</body>
+</html>

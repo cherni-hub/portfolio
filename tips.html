@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Советы по продуктивности</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0f0e0c; --surface:#1a1916; --border:#2e2c28;
+      --accent:#c9a84c; --accent2:#7fb89a; --text:#e8e4da; --muted:#7a7669; --card:#161512;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2.5rem; background:rgba(15,14,12,.92); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--accent); }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a { color:var(--muted); text-decoration:none; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase; transition:color .2s; }
+    .nav-links a:hover { color:var(--text); }
+    .nav-links a.active { color:var(--accent); }
+
+    .page { max-width:960px; margin:0 auto; padding:3rem 2rem 5rem; }
+    .page-label { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:.6rem; }
+    h1 { font-family:'DM Serif Display',serif; font-size:clamp(2rem,4vw,2.8rem); margin-bottom:.5rem; }
+    .subtitle { color:var(--muted); font-size:.9rem; margin-bottom:2rem; }
+
+    
+    .quote-hero {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:2rem 2.5rem; margin-bottom:2.5rem; position:relative; overflow:hidden;
+      min-height:120px; display:flex; flex-direction:column; justify-content:center;
+    }
+    .quote-hero::before {
+      content:'"'; position:absolute; top:-.2rem; left:1rem;
+      font-family:'DM Serif Display',serif; font-size:8rem; color:var(--border);
+      line-height:1; pointer-events:none;
+    }
+    .quote-text {
+      font-family:'DM Serif Display',serif; font-style:italic;
+      font-size:clamp(1.1rem,2.5vw,1.45rem); line-height:1.5;
+      color:var(--text); position:relative; z-index:1;
+      opacity:0; transform:translateY(8px);
+      transition:opacity .5s, transform .5s;
+    }
+    .quote-text.visible { opacity:1; transform:translateY(0); }
+    .quote-author {
+      font-size:.78rem; color:var(--accent); letter-spacing:.06em;
+      margin-top:.8rem; position:relative; z-index:1;
+    }
+    .quote-refresh {
+      position:absolute; top:1rem; right:1rem;
+      background:transparent; border:1px solid var(--border); border-radius:3px;
+      color:var(--muted); cursor:pointer; padding:.35rem .7rem; font-size:.78rem;
+      font-family:'DM Sans',sans-serif; transition:all .2s;
+    }
+    .quote-refresh:hover { border-color:var(--accent); color:var(--accent); }
+
+    
+    .filter-row {
+      display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.8rem;
+    }
+    .cat-btn {
+      padding:.35rem .9rem; border-radius:2px; cursor:pointer;
+      font-size:.78rem; letter-spacing:.05em; text-transform:uppercase;
+      background:transparent; border:1px solid var(--border);
+      color:var(--muted); font-family:'DM Sans',sans-serif; transition:all .15s;
+    }
+    .cat-btn:hover { border-color:var(--muted); color:var(--text); }
+    .cat-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(201,168,76,.07); }
+
+   
+    .tips-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1px;
+      background:var(--border); border:1px solid var(--border); border-radius:6px; overflow:hidden;
+    }
+
+    .tip-card {
+      background:var(--card); padding:1.6rem;
+      opacity:0; transform:translateY(16px);
+      transition:opacity .5s ease, transform .5s ease, background .2s;
+      display:flex; flex-direction:column; gap:.75rem;
+    }
+    .tip-card.visible { opacity:1; transform:translateY(0); }
+    .tip-card:hover { background:var(--surface); }
+
+    .tip-icon { font-size:1.6rem; line-height:1; }
+    .tip-cat {
+      display:inline-block; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase;
+      padding:.18rem .5rem; border-radius:2px;
+      color:var(--accent2); border:1px solid rgba(127,184,154,.25);
+    }
+    .tip-title { font-size:1rem; font-weight:500; line-height:1.3; }
+    .tip-body { font-size:.85rem; color:var(--muted); line-height:1.65; flex:1; }
+    .tip-link {
+      font-size:.78rem; color:var(--accent); text-decoration:none; letter-spacing:.04em;
+      align-self:flex-start; transition:opacity .2s;
+    }
+    .tip-link:hover { opacity:.75; }
+
+    .no-tips {
+      grid-column:1/-1; text-align:center; padding:3rem;
+      color:var(--muted); font-size:.9rem;
+    }
+
+    @media(max-width:600px){
+      nav { padding:.8rem 1.2rem; } .nav-links { gap:1rem; }
+      .page { padding:2rem 1rem 4rem; }
+      .quote-hero { padding:1.5rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">⏱ Время</div>
+  <ul class="nav-links">
+    <li><a href="index.html">Главная</a></li>
+    <li><a href="planner.html">Планировщик</a></li>
+    <li><a href="pomodoro.html">Pomodoro</a></li>
+    <li><a href="productivity.html">Калькулятор</a></li>
+    <li><a href="tips.html" class="active">Советы</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+  <div class="page-label">Модуль 5</div>
+  <h1>Советы по продуктивности</h1>
+  <p class="subtitle">Проверенные техники и цитаты великих о ценности времени</p>
+
+  
+  <div class="quote-hero">
+    <button class="quote-refresh" onclick="showNextQuote()">↻ Другая цитата</button>
+    <div class="quote-text" id="quote-text">Загрузка...</div>
+    <div class="quote-author" id="quote-author"></div>
+  </div>
+
+  
+  <div class="filter-row" id="filter-row">
+    <button class="cat-btn active" onclick="filterTips('', this)">Все</button>
+  </div>
+
+  
+  <div class="tips-grid" id="tips-grid"></div>
+</div>
+
+<script>
+
+const QUOTES = [
+  { text: 'Время — единственный ресурс, который невозможно восполнить. Береги каждую минуту.', author: '— Питер Друкер' },
+  { text: 'Не говори, что у тебя нет времени. У тебя столько же часов в сутках, сколько было у Леонардо да Винчи, Пастера и Эйнштейна.', author: '— Г. Джексон Браун' },
+  { text: 'Потерянное время не вернуть, но каждый новый момент — это возможность начать лучше.', author: '— Марк Аврелий' },
+  { text: 'Секрет опережения — в начале. Начни прямо сейчас.', author: '— Марк Твен' },
+  { text: 'Планируй завтра сегодня вечером — и ты уже опередишь 80% людей.', author: '— Брайан Трейси' },
+  { text: 'Умение сосредоточиться на одной задаче — главный навык XXI века.', author: '— Кэл Ньюпорт' },
+  { text: 'Не пытайся успеть всё. Успей самое важное.', author: '— Гэри Келлер' },
+];
+
+const TIPS = [
+  { id:1, icon:'🍅', cat:'Pomodoro',       title:'Работай блоками по 25 минут',            body:'Техника Pomodoro: 25 минут глубокой работы, потом 5 минут отдыха. После 4 блоков — длинный перерыв. Мозг устаёт быстро, дай ему ритм.' },
+  { id:2, icon:'📋', cat:'Планирование',   title:'Правило трёх задач',                     body:'Каждое утро выбирай три главные задачи дня. Если успеешь только их — день прожит не зря. Приоритет важнее скорости.' },
+  { id:3, icon:'🐸', cat:'Психология',     title:'Съедай лягушку с утра',                  body:'Самое неприятное дело делай первым. После него всё остальное покажется лёгким, а прокрастинация не накопится к вечеру.' },
+  { id:4, icon:'📵', cat:'Фокус',          title:'Блокируй уведомления во время работы',   body:'Каждое уведомление отвлекает минимум на 23 минуты. Включай режим «Не беспокоить» на время рабочих блоков — это не грубость, это уважение к своему времени.' },
+  { id:5, icon:'🌙', cat:'Восстановление', title:'Заряжайся сном, а не кофе',              body:'7–9 часов сна повышают продуктивность на 30–40%. Кофе маскирует усталость, но не убирает её. Инвестируй в сон — это лучший биохакинг.' },
+  { id:6, icon:'📓', cat:'Планирование',   title:'Вечерний разбор полётов',                body:'5 минут вечером: запиши 3 достижения дня и 1 зону улучшения. Это формирует нейронные связи и ускоряет личный рост.' },
+  { id:7, icon:'🎯', cat:'Приоритеты',     title:'Матрица Эйзенхауэра',                   body:'Разбивай задачи на 4 квадранта: важно+срочно → делать сейчас; важно+несрочно → планировать; неважно+срочно → делегировать; остальное → удалить.' },
+  { id:8, icon:'🔁', cat:'Привычки',       title:'Принцип двух минут',                     body:'Если задача занимает меньше двух минут — сделай её немедленно. Мелкие задачи в очереди создают ментальный шум и пожирают энергию.' },
+  { id:9, icon:'🧘', cat:'Восстановление', title:'Активные перерывы',                      body:'Вместо листания телефона в перерыве — 5 минут ходьбы или растяжки. Физическая активность восстанавливает концентрацию в 3 раза эффективнее пассивного отдыха.' },
+  { id:10,icon:'📊', cat:'Фокус',          title:'Один экран — одна задача',               body:'Многозадачность снижает IQ на 10–15 пунктов. Закрой лишние вкладки, убери второй монитор с нерабочим контентом. Моно-фокус — суперсила.' },
+  { id:11,icon:'⚡', cat:'Энергия',        title:'Работай по биологическим часам',         body:'Утренние часы (9–11) — пик когнитивной активности у большинства. Ставь туда самые сложные задачи. Рутину и встречи — на послеобеденное время.' },
+  { id:12,icon:'📎', cat:'Приоритеты',     title:'Принцип 80/20',                         body:'20% задач дают 80% результата. Найди эти задачи с помощью вопроса: «Если бы я мог сделать только одно дело сегодня, что бы принесло максимум пользы?»' },
+];
+
+let allTips = [...TIPS];
+let activeFilter = '';
+let quoteIdx = 0;
+
+
+function showNextQuote() {
+  quoteIdx = (quoteIdx + 1) % QUOTES.length;
+  const el = document.getElementById('quote-text');
+  el.classList.remove('visible');
+  setTimeout(() => {
+    el.textContent = QUOTES[quoteIdx].text;
+    document.getElementById('quote-author').textContent = QUOTES[quoteIdx].author;
+    el.classList.add('visible');
+  }, 250);
+}
+
+
+function loadQuotes() {
+  return new Promise(resolve => setTimeout(() => resolve(QUOTES), 300));
+}
+
+async function initQuotes() {
+  const quotes = await loadQuotes();
+  quoteIdx = Math.floor(Math.random() * quotes.length);
+  const el = document.getElementById('quote-text');
+  el.textContent = quotes[quoteIdx].text;
+  document.getElementById('quote-author').textContent = quotes[quoteIdx].author;
+  setTimeout(() => el.classList.add('visible'), 100);
+}
+
+
+function buildFilters() {
+  const cats = [...new Set(TIPS.map(t => t.cat))];
+  const row = document.getElementById('filter-row');
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.textContent = c;
+    btn.onclick = () => filterTips(c, btn);
+    row.appendChild(btn);
+  });
+}
+
+function filterTips(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTips();
+}
+
+function renderTips() {
+  const grid = document.getElementById('tips-grid');
+  const filtered = activeFilter ? allTips.filter(t => t.cat === activeFilter) : allTips;
+
+  grid.innerHTML = '';
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="no-tips">Нет советов в этой категории</div>';
+    return;
+  }
+
+  filtered.forEach(tip => {
+    const card = document.createElement('div');
+    card.className = 'tip-card';
+    card.innerHTML = `
+      <span class="tip-icon">${tip.icon}</span>
+      <span class="tip-cat">${tip.cat}</span>
+      <div class="tip-title">${tip.title}</div>
+      <div class="tip-body">${tip.body}</div>`;
+    grid.appendChild(card);
+  });
+
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  grid.querySelectorAll('.tip-card').forEach(c => observer.observe(c));
+}
+
+
+initQuotes();
+buildFilters();
+renderTips();
+</script>
+</body>
+</html>
